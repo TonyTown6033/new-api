@@ -18,7 +18,12 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import React, { useEffect, useState } from 'react';
-import { API, showError } from '../../helpers';
+import {
+  API,
+  getSystemName,
+  replaceLegacyBrandName,
+  showError,
+} from '../../helpers';
 import { marked } from 'marked';
 import { Empty } from '@douyinfe/semi-ui';
 import {
@@ -32,6 +37,8 @@ const About = () => {
   const [about, setAbout] = useState('');
   const [aboutLoaded, setAboutLoaded] = useState(false);
   const currentYear = new Date().getFullYear();
+  const systemName = getSystemName();
+  const projectRepoLabel = replaceLegacyBrandName(t('New API项目仓库地址：'));
 
   const displayAbout = async () => {
     setAbout(localStorage.getItem('about') || '');
@@ -62,15 +69,17 @@ const About = () => {
   const customDescription = (
     <div style={{ textAlign: 'center' }}>
       <p>{t('可在设置页面设置关于内容，支持 HTML & Markdown')}</p>
-      {t('New API项目仓库地址：')}
-      <a
-        href='https://github.com/QuantumNous/new-api'
-        target='_blank'
-        rel='noopener noreferrer'
-        className='!text-semi-color-primary'
-      >
-        https://github.com/QuantumNous/new-api
-      </a>
+      <p>
+        {projectRepoLabel}
+        <a
+          href='https://github.com/QuantumNous/new-api'
+          target='_blank'
+          rel='noopener noreferrer'
+          className='!text-semi-color-primary'
+        >
+          {systemName}
+        </a>
+      </p>
       <p>
         <a
           href='https://github.com/QuantumNous/new-api'
@@ -78,7 +87,7 @@ const About = () => {
           rel='noopener noreferrer'
           className='!text-semi-color-primary'
         >
-          NewAPI
+          {systemName}
         </a>{' '}
         {t('© {{currentYear}}', { currentYear })}{' '}
         <a

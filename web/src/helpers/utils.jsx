@@ -48,8 +48,29 @@ export function isRoot() {
 
 export function getSystemName() {
   let system_name = localStorage.getItem('system_name');
-  if (!system_name) return 'New API';
-  return system_name;
+  if (!system_name) return 'eliteToken';
+
+  const normalizedSystemName = system_name.trim();
+  const legacySystemName = normalizedSystemName
+    .toLowerCase()
+    .replace(/[\s_-]+/g, '');
+
+  if (legacySystemName === 'newapi') {
+    return 'eliteToken';
+  }
+
+  return normalizedSystemName;
+}
+
+export function replaceLegacyBrandName(text) {
+  if (typeof text !== 'string') {
+    return text;
+  }
+
+  return text
+    .replace(/New API/g, 'eliteToken')
+    .replace(/NewAPI/g, 'eliteToken')
+    .replace(/new-api/g, 'eliteToken');
 }
 
 export function getLogo() {

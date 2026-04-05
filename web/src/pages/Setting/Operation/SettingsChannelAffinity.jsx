@@ -47,6 +47,7 @@ import {
 import {
   API,
   compareObjects,
+  replaceLegacyBrandName,
   showError,
   showSuccess,
   showWarning,
@@ -1137,8 +1138,10 @@ export default function SettingsChannelAffinity(props) {
                           '可选。匹配入口请求的 User-Agent；任意一行作为子串匹配（忽略大小写）即命中。',
                         )}
                         <br />
-                        {t(
-                          'NewAPI 默认不会将入口请求的 User-Agent 透传到上游渠道；该条件仅用于识别访问本站点的客户端。',
+                        {replaceLegacyBrandName(
+                          t(
+                            'NewAPI 默认不会将入口请求的 User-Agent 透传到上游渠道；该条件仅用于识别访问本站点的客户端。',
+                          ),
                         )}
                         <br />
                         {t(

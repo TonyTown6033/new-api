@@ -21,6 +21,8 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   API,
+  getSystemName,
+  replaceLegacyBrandName,
   showError,
   showInfo,
   showSuccess,
@@ -160,6 +162,7 @@ function type2secretPrompt(type) {
 
 const EditChannelModal = (props) => {
   const { t } = useTranslation();
+  const systemName = getSystemName();
   const channelId = props.editingChannel.id;
   const isEdit = channelId !== undefined;
   const [loading, setLoading] = useState(isEdit);
@@ -558,8 +561,7 @@ const EditChannelModal = (props) => {
     if (name === 'base_url' && value.endsWith('/v1')) {
       Modal.confirm({
         title: '警告',
-        content:
-          '不需要在末尾加/v1，New API会自动处理，添加后可能导致请求失败，是否继续？',
+        content: `不需要在末尾加/v1，${systemName}会自动处理，添加后可能导致请求失败，是否继续？`,
         onOk: () => {
           setInputs((inputs) => ({ ...inputs, [name]: value }));
         },
@@ -3252,8 +3254,10 @@ const EditChannelModal = (props) => {
                               }
                               showClear
                               disabled={isIonetLocked}
-                              extraText={t(
-                                '对于官方渠道，new-api已经内置地址，除非是第三方代理站点或者Azure的特殊接入地址，否则不需要填写',
+                              extraText={replaceLegacyBrandName(
+                                t(
+                                  '对于官方渠道，new-api已经内置地址，除非是第三方代理站点或者Azure的特殊接入地址，否则不需要填写',
+                                ),
                               )}
                             />
                           </div>

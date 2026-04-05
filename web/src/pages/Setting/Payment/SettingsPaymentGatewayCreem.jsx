@@ -32,7 +32,12 @@ import {
   Select,
 } from '@douyinfe/semi-ui';
 const { Text } = Typography;
-import { API, showError, showSuccess } from '../../../helpers';
+import {
+  API,
+  replaceLegacyBrandName,
+  showError,
+  showSuccess,
+} from '../../../helpers';
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2 } from 'lucide-react';
 
@@ -267,7 +272,10 @@ export default function SettingsPaymentGatewayCreem(props) {
             </a>
             <br />
           </Text>
-          <Banner type='info' description={t('Creem Setting Tips')} />
+          <Banner
+            type='info'
+            description={replaceLegacyBrandName(t('Creem Setting Tips'))}
+          />
 
           <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 24, xl: 24, xxl: 24 }}>
             <Col xs={24} sm={24} md={8} lg={8} xl={8}>
@@ -282,8 +290,8 @@ export default function SettingsPaymentGatewayCreem(props) {
               <Form.Input
                 field='CreemWebhookSecret'
                 label={t('Webhook 密钥')}
-                placeholder={t(
-                  '用于验证回调 new-api 的 webhook 请求的密钥，敏感信息不显示',
+                placeholder={replaceLegacyBrandName(
+                  t('用于验证回调 new-api 的 webhook 请求的密钥，敏感信息不显示'),
                 )}
                 type='password'
               />
