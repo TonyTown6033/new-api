@@ -149,6 +149,16 @@ https://zhifu.api888.yunqi.ink/
 
 ## 二、Nginx 域名接入说明
 
+如果你的场景是“用户主要位于中国大陆，源站部署在香港或其他境外区域”，并且出现了：
+
+- 页面打开很慢
+- `/login`、`/pricing` 等深链接偶发空白
+- 首页和深链接像是拿到了不同版本的前端入口页
+
+建议同时阅读：
+
+- [大陆访问香港部署站点排障文档](./deployment-mainland-access-and-route-troubleshooting.md)
+
 ### 1. 目标
 
 让 `superelite.studio` 正常访问部署在服务器上的 `new-api` 服务。

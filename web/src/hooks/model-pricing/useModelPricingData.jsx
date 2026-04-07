@@ -24,6 +24,44 @@ import { Modal } from '@douyinfe/semi-ui';
 import { UserContext } from '../../context/User';
 import { StatusContext } from '../../context/Status';
 
+const normalizeString = (value) => {
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (value === null || value === undefined) {
+    return '';
+  }
+  return String(value);
+};
+
+const normalizeStringArray = (value) => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((item) => normalizeString(item).trim())
+    .filter(Boolean);
+};
+
+const normalizePricingModel = (model) => ({
+  ...model,
+  model_name: normalizeString(model?.model_name).trim(),
+  description: normalizeString(model?.description),
+  icon: normalizeString(model?.icon),
+  tags: normalizeString(model?.tags),
+  vendor_name: normalizeString(model?.vendor_name),
+  vendor_icon: normalizeString(model?.vendor_icon),
+  vendor_description: normalizeString(model?.vendor_description),
+  enable_groups: normalizeStringArray(model?.enable_groups),
+  supported_endpoint_types: normalizeStringArray(
+    model?.supported_endpoint_types,
+  ),
+  quota_type:
+    typeof model?.quota_type === 'number'
+      ? model.quota_type
+      : Number(model?.quota_type) || 0,
+});
+
 export const useModelPricingData = () => {
   const { t } = useTranslation();
   const [searchValue, setSearchValue] = useState('');
@@ -193,8 +231,12 @@ export const useModelPricingData = () => {
   };
 
   const setModelsFormat = (models, groupRatio, vendorMap) => {
-    for (let i = 0; i < models.length; i++) {
-      const m = models[i];
+    const normalizedModels = Array.isArray(models)
+      ? models.map((model) => normalizePricingModel(model))
+      : [];
+
+    for (let i = 0; i < normalizedModels.length; i++) {
+      const m = normalizedModels[i];
       m.key = m.model_name;
       m.group_ratio = groupRatio[m.model_name];
 
@@ -205,11 +247,11 @@ export const useModelPricingData = () => {
         m.vendor_description = vendor.description;
       }
     }
-    models.sort((a, b) => {
+    normalizedModels.sort((a, b) => {
       return a.quota_type - b.quota_type;
     });
 
-    models.sort((a, b) => {
+    normalizedModels.sort((a, b) => {
       if (a.model_name.startsWith('gpt') && !b.model_name.startsWith('gpt')) {
         return -1;
       } else if (
@@ -222,42 +264,64 @@ export const useModelPricingData = () => {
       }
     });
 
-    setModels(models);
+    setModels(normalizedModels);
   };
 
   const loadPricing = async () => {
     setLoading(true);
-    let url = '/api/pricing';
-    const res = await API.get(url);
-    const {
-      success,
-      message,
-      data,
-      vendors,
-      group_ratio,
-      usable_group,
-      supported_endpoint,
-      auto_groups,
-    } = res.data;
-    if (success) {
-      setGroupRatio(group_ratio);
-      setUsableGroup(usable_group);
-      setSelectedGroup('all');
-      // 构建供应商 Map 方便查找
-      const vendorMap = {};
-      if (Array.isArray(vendors)) {
-        vendors.forEach((v) => {
-          vendorMap[v.id] = v;
-        });
+    try {
+      let url = '/api/pricing';
+      const res = await API.get(url);
+      const {
+        success,
+        message,
+        data,
+        vendors,
+        group_ratio,
+        usable_group,
+        supported_endpoint,
+        auto_groups,
+      } = res.data;
+
+      if (success) {
+        const normalizedGroupRatio =
+          group_ratio && typeof group_ratio === 'object' ? group_ratio : {};
+        const normalizedUsableGroup =
+          usable_group && typeof usable_group === 'object' ? usable_group : {};
+
+        setGroupRatio(normalizedGroupRatio);
+        setUsableGroup(normalizedUsableGroup);
+        setSelectedGroup('all');
+
+        const vendorMap = {};
+        if (Array.isArray(vendors)) {
+          vendors.forEach((v) => {
+            vendorMap[v.id] = v;
+          });
+        }
+
+        setVendorsMap(vendorMap);
+        setEndpointMap(
+          supported_endpoint && typeof supported_endpoint === 'object'
+            ? supported_endpoint
+            : {},
+        );
+        setAutoGroups(normalizeStringArray(auto_groups));
+        setModelsFormat(data, normalizedGroupRatio, vendorMap);
+      } else {
+        showError(message);
+        setModels([]);
       }
-      setVendorsMap(vendorMap);
-      setEndpointMap(supported_endpoint || {});
-      setAutoGroups(auto_groups || []);
-      setModelsFormat(data, group_ratio, vendorMap);
-    } else {
-      showError(message);
+    } catch (error) {
+      setModels([]);
+      setVendorsMap({});
+      setGroupRatio({});
+      setUsableGroup({});
+      setEndpointMap({});
+      setAutoGroups([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const refresh = async () => {

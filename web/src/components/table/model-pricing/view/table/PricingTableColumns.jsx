@@ -153,7 +153,9 @@ export const getPricingTableColumns = ({
       });
     },
     onFilter: (value, record) =>
-      record.model_name.toLowerCase().includes(value.toLowerCase()),
+      (typeof record.model_name === 'string' ? record.model_name : '')
+        .toLowerCase()
+        .includes(value.toLowerCase()),
   };
 
   const quotaColumn = {

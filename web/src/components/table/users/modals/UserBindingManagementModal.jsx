@@ -278,8 +278,12 @@ const UserBindingManagementModal = ({
     customOAuthBindings.map((item) => [Number(item.provider_id), item]),
   );
 
+  const customOAuthProviders = Array.isArray(statusInfo.custom_oauth_providers)
+    ? statusInfo.custom_oauth_providers
+    : [];
+
   const customProviderMap = new Map(
-    (statusInfo.custom_oauth_providers || []).map((provider) => [
+    customOAuthProviders.map((provider) => [
       Number(provider.id),
       provider,
     ]),

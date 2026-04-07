@@ -27,6 +27,9 @@ const normalizeTags = (tags = '') =>
     .map((t) => t.trim())
     .filter(Boolean);
 
+const getModelName = (model) =>
+  typeof model?.model_name === 'string' ? model.model_name : '';
+
 /**
  * 统一计算模型筛选后的各种集合与动态计数，供多个组件复用
  */
@@ -87,10 +90,11 @@ export const usePricingFilterCounts = ({
     // 搜索
     if (!ignore.includes('search') && searchValue) {
       const term = searchValue.toLowerCase();
+      const modelName = getModelName(model).toLowerCase();
       const tags = model.tags ? model.tags.toLowerCase() : '';
       if (
         !(
-          model.model_name.toLowerCase().includes(term) ||
+          modelName.includes(term) ||
           (model.description &&
             model.description.toLowerCase().includes(term)) ||
           tags.includes(term) ||

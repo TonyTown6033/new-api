@@ -59,7 +59,7 @@ const PricingEndpointTypes = ({
     }
     return models.filter(
       (model) =>
-        model.supported_endpoint_types &&
+        Array.isArray(model.supported_endpoint_types) &&
         model.supported_endpoint_types.includes(endpointType),
     ).length;
   };

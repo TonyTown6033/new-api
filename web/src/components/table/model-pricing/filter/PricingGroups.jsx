@@ -48,7 +48,9 @@ const PricingGroups = ({
     const modelCount =
       g === 'all'
         ? models.length
-        : models.filter((m) => m.enable_groups && m.enable_groups.includes(g))
+        : models.filter(
+            (m) => Array.isArray(m.enable_groups) && m.enable_groups.includes(g),
+          )
             .length;
     let ratioDisplay = '';
     if (g === 'all') {
