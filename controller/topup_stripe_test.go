@@ -52,6 +52,24 @@ func setupStripeWebhookTestDB(t *testing.T) *gorm.DB {
 	return db
 }
 
+func configureStripeWebhookTestSettings(t *testing.T, webhookSecret string) {
+	t.Helper()
+
+	oldAPISecret := setting.StripeApiSecret
+	oldWebhookSecret := setting.StripeWebhookSecret
+	oldPriceID := setting.StripePriceId
+
+	setting.StripeApiSecret = "sk_test"
+	setting.StripeWebhookSecret = webhookSecret
+	setting.StripePriceId = "price_test"
+
+	t.Cleanup(func() {
+		setting.StripeApiSecret = oldAPISecret
+		setting.StripeWebhookSecret = oldWebhookSecret
+		setting.StripePriceId = oldPriceID
+	})
+}
+
 func signedStripeEventPayload(t *testing.T, eventType string, object map[string]any, secret string) (payload []byte, signature string) {
 	t.Helper()
 
@@ -105,11 +123,7 @@ func performStripeWebhook(t *testing.T, payload []byte, signature string) *httpt
 
 func TestStripeWebhookDoesNotCompleteNonStripeTopUp(t *testing.T) {
 	db := setupStripeWebhookTestDB(t)
-	oldSecret := setting.StripeWebhookSecret
-	setting.StripeWebhookSecret = "whsec_test"
-	t.Cleanup(func() {
-		setting.StripeWebhookSecret = oldSecret
-	})
+	configureStripeWebhookTestSettings(t, "whsec_test")
 
 	user := model.User{
 		Username: "alipay-user",
@@ -158,11 +172,7 @@ func TestStripeWebhookDoesNotCompleteNonStripeTopUp(t *testing.T) {
 
 func TestStripeWebhookCompletesStripeTopUp(t *testing.T) {
 	db := setupStripeWebhookTestDB(t)
-	oldSecret := setting.StripeWebhookSecret
-	setting.StripeWebhookSecret = "whsec_test"
-	t.Cleanup(func() {
-		setting.StripeWebhookSecret = oldSecret
-	})
+	configureStripeWebhookTestSettings(t, "whsec_test")
 
 	user := model.User{
 		Username: "stripe-user",
@@ -174,13 +184,14 @@ func TestStripeWebhookCompletesStripeTopUp(t *testing.T) {
 	}
 
 	topUp := model.TopUp{
-		UserId:        user.Id,
-		Amount:        10,
-		Money:         80,
-		TradeNo:       "ref_stripe_test",
-		PaymentMethod: PaymentMethodStripe,
-		CreateTime:    time.Now().Unix(),
-		Status:        common.TopUpStatusPending,
+		UserId:          user.Id,
+		Amount:          10,
+		Money:           80,
+		TradeNo:         "ref_stripe_test",
+		PaymentMethod:   model.PaymentMethodStripe,
+		PaymentProvider: model.PaymentProviderStripe,
+		CreateTime:      time.Now().Unix(),
+		Status:          common.TopUpStatusPending,
 	}
 	if err := db.Create(&topUp).Error; err != nil {
 		t.Fatalf("failed to create top-up: %v", err)
@@ -211,11 +222,7 @@ func TestStripeWebhookCompletesStripeTopUp(t *testing.T) {
 }
 
 func TestStripeWebhookRejectsEmptyWebhookSecret(t *testing.T) {
-	oldSecret := setting.StripeWebhookSecret
-	setting.StripeWebhookSecret = ""
-	t.Cleanup(func() {
-		setting.StripeWebhookSecret = oldSecret
-	})
+	configureStripeWebhookTestSettings(t, "")
 
 	payload, signature := signedStripeCheckoutCompletedPayload(t, "ref_empty_secret", 8000, "")
 	recorder := performStripeWebhook(t, payload, signature)
@@ -226,11 +233,7 @@ func TestStripeWebhookRejectsEmptyWebhookSecret(t *testing.T) {
 
 func TestStripeWebhookDefersUnpaidSessionUntilAsyncSuccess(t *testing.T) {
 	db := setupStripeWebhookTestDB(t)
-	oldSecret := setting.StripeWebhookSecret
-	setting.StripeWebhookSecret = "whsec_test"
-	t.Cleanup(func() {
-		setting.StripeWebhookSecret = oldSecret
-	})
+	configureStripeWebhookTestSettings(t, "whsec_test")
 
 	user := model.User{
 		Username: "stripe-async-user",
@@ -242,13 +245,14 @@ func TestStripeWebhookDefersUnpaidSessionUntilAsyncSuccess(t *testing.T) {
 	}
 
 	topUp := model.TopUp{
-		UserId:        user.Id,
-		Amount:        10,
-		Money:         80,
-		TradeNo:       "ref_stripe_async_success",
-		PaymentMethod: PaymentMethodStripe,
-		CreateTime:    time.Now().Unix(),
-		Status:        common.TopUpStatusPending,
+		UserId:          user.Id,
+		Amount:          10,
+		Money:           80,
+		TradeNo:         "ref_stripe_async_success",
+		PaymentMethod:   model.PaymentMethodStripe,
+		PaymentProvider: model.PaymentProviderStripe,
+		CreateTime:      time.Now().Unix(),
+		Status:          common.TopUpStatusPending,
 	}
 	if err := db.Create(&topUp).Error; err != nil {
 		t.Fatalf("failed to create top-up: %v", err)
@@ -310,11 +314,7 @@ func TestStripeWebhookDefersUnpaidSessionUntilAsyncSuccess(t *testing.T) {
 
 func TestStripeWebhookAsyncPaymentFailedMarksTopUpFailed(t *testing.T) {
 	db := setupStripeWebhookTestDB(t)
-	oldSecret := setting.StripeWebhookSecret
-	setting.StripeWebhookSecret = "whsec_test"
-	t.Cleanup(func() {
-		setting.StripeWebhookSecret = oldSecret
-	})
+	configureStripeWebhookTestSettings(t, "whsec_test")
 
 	user := model.User{
 		Username: "stripe-async-fail-user",
@@ -326,13 +326,14 @@ func TestStripeWebhookAsyncPaymentFailedMarksTopUpFailed(t *testing.T) {
 	}
 
 	topUp := model.TopUp{
-		UserId:        user.Id,
-		Amount:        10,
-		Money:         80,
-		TradeNo:       "ref_stripe_async_failed",
-		PaymentMethod: PaymentMethodStripe,
-		CreateTime:    time.Now().Unix(),
-		Status:        common.TopUpStatusPending,
+		UserId:          user.Id,
+		Amount:          10,
+		Money:           80,
+		TradeNo:         "ref_stripe_async_failed",
+		PaymentMethod:   model.PaymentMethodStripe,
+		PaymentProvider: model.PaymentProviderStripe,
+		CreateTime:      time.Now().Unix(),
+		Status:          common.TopUpStatusPending,
 	}
 	if err := db.Create(&topUp).Error; err != nil {
 		t.Fatalf("failed to create top-up: %v", err)

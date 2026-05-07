@@ -10,7 +10,8 @@ import (
 
 const (
 	// SecureVerificationSessionKey 安全验证的 session key（与 controller 保持一致）
-	SecureVerificationSessionKey = "secure_verified_at"
+	SecureVerificationSessionKey       = "secure_verified_at"
+	secureVerificationMethodSessionKey = "secure_verified_method"
 	// SecureVerificationTimeout 验证有效期（秒）
 	SecureVerificationTimeout = 300 // 5分钟
 )
@@ -46,8 +47,7 @@ func CheckSecureVerification(c *gin.Context) *SecureVerificationFailure {
 	verifiedAt, ok := verifiedAtRaw.(int64)
 	if !ok {
 		// session 数据格式错误
-		session.Delete(SecureVerificationSessionKey)
-		_ = session.Save()
+		clearSecureVerificationSession(session)
 		return &SecureVerificationFailure{
 			Status:  http.StatusForbidden,
 			Message: "验证状态异常，请重新验证",
@@ -59,8 +59,7 @@ func CheckSecureVerification(c *gin.Context) *SecureVerificationFailure {
 	elapsed := time.Now().Unix() - verifiedAt
 	if elapsed >= SecureVerificationTimeout {
 		// 验证已过期，清除 session
-		session.Delete(SecureVerificationSessionKey)
-		_ = session.Save()
+		clearSecureVerificationSession(session)
 		return &SecureVerificationFailure{
 			Status:  http.StatusForbidden,
 			Message: "验证已过期，请重新验证",
@@ -89,9 +88,14 @@ func SecureVerificationRequired() gin.HandlerFunc {
 			return
 		}
 
-		// 验证有效，继续处理请求
 		c.Next()
 	}
+}
+
+func clearSecureVerificationSession(session sessions.Session) {
+	session.Delete(SecureVerificationSessionKey)
+	session.Delete(secureVerificationMethodSessionKey)
+	_ = session.Save()
 }
 
 // OptionalSecureVerification 可选的安全验证中间件
@@ -124,8 +128,7 @@ func OptionalSecureVerification() gin.HandlerFunc {
 
 		elapsed := time.Now().Unix() - verifiedAt
 		if elapsed >= SecureVerificationTimeout {
-			session.Delete(SecureVerificationSessionKey)
-			_ = session.Save()
+			clearSecureVerificationSession(session)
 			c.Set("secure_verified", false)
 			c.Next()
 			return
@@ -141,6 +144,5 @@ func OptionalSecureVerification() gin.HandlerFunc {
 // 用于用户登出或需要强制重新验证的场景
 func ClearSecureVerification(c *gin.Context) {
 	session := sessions.Default(c)
-	session.Delete(SecureVerificationSessionKey)
-	_ = session.Save()
+	clearSecureVerificationSession(session)
 }

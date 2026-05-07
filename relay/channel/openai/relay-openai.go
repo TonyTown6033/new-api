@@ -303,7 +303,7 @@ func openAITextResponseChoiceContent(choice dto.OpenAITextResponseChoice) string
 	if choice.Text != "" {
 		return choice.Text
 	}
-	return choice.Message.StringContent() + choice.Message.ReasoningContent + choice.Message.Reasoning
+	return choice.Message.StringContent() + choice.Message.GetReasoningContent()
 }
 
 func streamTTSResponse(c *gin.Context, resp *http.Response) {
